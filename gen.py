@@ -26,18 +26,17 @@ async def get_contours(img_id):
 
 async def write_frame(outfile, img_id):
     contours = await get_contours(img_id)
-    outfile.write(b''.join(
-        b''.join((point[1] * 240 + point[0]).to_bytes(2, 'big') for point in contour[1]) + (b'\xfd' if contour[0] else b'\xfc') 
-        for contour in contours
-    ) + b'\xff')
+    async with aiofiles.open(outfile, "ab") as file:
+        await file.write(b''.join(
+            b''.join((point[1] * 240 + point[0]).to_bytes(2, 'big') for point in contour[1]) + (b'\xfd' if contour[0] else b'\xfc') 
+            for contour in contours
+        ) + b'\xff')
 
-async def process_frames():
-    with open("dist/badapple.bin", "wb") as outfile:
-        print("Processing...")
-        tasks = [write_frame(outfile, i) for i in range(1, 2631)]
-        await asyncio.gather(*tasks)
-
+async def process_frames(outfile):
+    print("Processing...")
+    tasks = [write_frame(outfile, i) for i in range(1, 2631)]
+    await asyncio.gather(*tasks)
     print(" 2630/2630\nDone")
 
 if __name__ == "__main__":
-    asyncio.run(process_frames())
+    asyncio.run(process_frames("dist/badapple.bin"))
