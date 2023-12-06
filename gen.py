@@ -1,10 +1,9 @@
 #!/bin/env python3
 
-
 import asyncio
-import concurrent.futures
 import numpy as np
 import cv2 as cv
+import aiofiles
 
 async def get_contours(img_id):
     im = cv.imread(f"img/{img_id:04}.png", cv.IMREAD_GRAYSCALE)
