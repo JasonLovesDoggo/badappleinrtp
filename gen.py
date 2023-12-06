@@ -1,10 +1,12 @@
 #!/bin/env python3
 
+
+import asyncio
 import concurrent.futures
 import numpy as np
 import cv2 as cv
 
-def get_contours(img_id):
+async def get_contours(img_id):
     im = cv.imread(f"img/{img_id:04}.png", cv.IMREAD_GRAYSCALE)
     ret, contoured = cv.threshold(im, 127, 255, cv.THRESH_BINARY)
     contours, _ = cv.findContours(contoured, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
@@ -22,21 +24,20 @@ def get_contours(img_id):
     ans = [(i % 2 == 0, np.array(c)[:, 0] // 2) for _, c in sorted_contours]
     return ans
 
-def write_contours(args):
-    file, img_id = args
-    contours = get_contours(img_id)
-    file.write(b''.join(
+async def write_frame(outfile, img_id):
+    contours = await get_contours(img_id)
+    outfile.write(b''.join(
         b''.join((point[1] * 240 + point[0]).to_bytes(2, 'big') for point in contour[1]) + (b'\xfd' if contour[0] else b'\xfc') 
         for contour in contours
     ) + b'\xff')
 
-def main():
+async def process_frames():
     with open("dist/badapple.bin", "wb") as outfile:
         print("Processing...")
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            executor.map(write_contours, ((outfile, i) for i in range(1, 2631)))
+        tasks = [write_frame(outfile, i) for i in range(1, 2631)]
+        await asyncio.gather(*tasks)
 
     print(" 2630/2630\nDone")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(process_frames())
