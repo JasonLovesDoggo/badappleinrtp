@@ -4,6 +4,7 @@ import asyncio
 import numpy as np
 import cv2 as cv
 import aiofiles
+import sys
 
 async def get_contours(img_id):
     im = cv.imread(f"img/{img_id:04}.png", cv.IMREAD_GRAYSCALE)
@@ -30,6 +31,7 @@ async def write_frame(outfile, img_id):
             b''.join((point[1] * 240 + point[0]).to_bytes(2, 'big') for point in contour[1]) + (b'\xfd' if contour[0] else b'\xfc') 
             for contour in contours
         ) + b'\xff')
+    sys.stdout.write(str(img_id) + "Done") 
 
 async def process_frames(outfile):
     print("Processing...")
